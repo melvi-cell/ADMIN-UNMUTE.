@@ -1,99 +1,11 @@
 {
-  "name": "UNMUTED Admin",
-  "short_name": "UNMUTED Admin",
-  "description": "Administrative dashboard for UNMUTED Debate - manage enrollments and scholarship applications",
-  "start_url": "/admin.html",
-  "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#1a1a2e",
-  "background_color": "#fefcf5",
-  "icons": [
-    {
-      "src": "icons/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-256.png",
-      "sizes": "256x256",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icons/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshots/login-screen.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Admin Login Screen"
-    },
-    {
-      "src": "screenshots/dashboard-screen.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard Overview"
-    }
-  ],
-  "categories": ["productivity", "business", "education"],
-  "lang": "en-US",
+  "background_color": "#ffffff",
   "dir": "ltr",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "prefer_related_applications": false
+  "display": "standalone",
+  "name": "melvi-cell.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "melvi-cell.github",
+  "start_url": "/",
+  "theme_color": "#ffffff"
 }
