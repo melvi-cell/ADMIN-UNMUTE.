@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f59e0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNMUTED Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-7xl mx-auto p-6">
+    
+    <!-- Login Section -->
+    <div id="loginSection" class="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto">
+      <div id="loginForm">
+        <div class="text-center mb-6">
+          <i class="fas fa-shield-alt text-5xl text-amber-600 mb-3"></i>
+          <h2 class="text-xl font-bold">Admin Login</h2>
+          <p class="text-gray-500 text-sm mt-1">Enter your email to continue</p>
+        </div>
+        <input type="email" id="loginEmail" placeholder="Email Address" class="w-full p-3 border rounded-xl mb-3">
+        <input type="password" id="loginPassword" placeholder="Password" class="w-full p-3 border rounded-xl mb-4">
+        <button onclick="loginWithPassword()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold transition">
+          <i class="fas fa-sign-in-alt mr-2"></i> Login
+        </button>
+       <div class="text-center mt-4">
+  <p class="text-xs text-gray-500">Admin access only</p>
+  <p class="text-xs text-gray-400">Contact system administrator for password reset</p>
+</div>
+      </div>
+      
+      <div id="registerForm" class="hidden">
+        <div class="text-center mb-6">
+          <i class="fas fa-user-plus text-5xl text-amber-600 mb-3"></i>
+          <h2 class="text-xl font-bold">Create Admin Account</h2>
+        </div>
+        <input type="email" id="registerEmail" placeholder="Email Address" class="w-full p-3 border rounded-xl mb-3">
+        <input type="password" id="registerPassword" placeholder="Password (min 6 characters)" class="w-full p-3 border rounded-xl mb-3">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" class="w-full p-3 border rounded-xl mb-4">
+        <button onclick="register()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition">
+          <i class="fas fa-user-plus mr-2"></i> Create Account
+        </button>
+        <div class="text-center mt-4">
+          <a href="#" onclick="showLogin()" class="text-sm text-amber-600 hover:text-amber-800">← Back to Login</a>
+        </div>
+      </div>
+      
+      <div id="forgotPasswordForm" class="hidden">
+        <div class="text-center mb-6">
+          <i class="fas fa-key text-5xl text-amber-600 mb-3"></i>
+          <h2 class="text-xl font-bold">Reset Password</h2>
+        </div>
+        <input type="email" id="resetEmail" placeholder="Email Address" class="w-full p-3 border rounded-xl mb-4">
+        <button onclick="sendPasswordReset()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition">
+          <i class="fas fa-paper-plane mr-2"></i> Send Reset Link
+        </button>
+        <div class="text-center mt-4">
+          <a href="#" onclick="showLogin()" class="text-sm text-amber-600 hover:text-amber-800">← Back to Login</a>
+        </div>
+      </div>
+      
+      <div id="authMessage" class="mt-4 hidden"></div>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboardSection" class="hidden">
+      
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">🔥 UNMUTED Admin Dashboard</h1>
+        <div class="flex gap-3">
+          <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-download mr-2"></i> Export CSV
+          </button>
+          <button onclick="showTrash()" id="trashBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-trash-alt mr-2"></i> Trash (<span id="trashCount">0</span>)
+          </button>
+          <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+          </button>
+          <a href="index.html" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition text-sm">
+            <i class="fas fa-home mr-2"></i> Back to Site
+          </a>
+        </div>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-amber-500">
+            <p class="text-gray-500 text-sm">Total Enrollments</p>
+            <p class="text-3xl font-bold" id="enrollmentCount">0</p>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-emerald-500">
+            <p class="text-gray-500 text-sm">Scholarship Applicants</p>
+            <p class="text-3xl font-bold" id="scholarshipCount">0</p>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500">
+            <p class="text-gray-500 text-sm">Total Submissions</p>
+            <p class="text-3xl font-bold" id="totalCount">0</p>
+          </div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-purple-500">
+            <p class="text-gray-500 text-sm">Last 7 Days</p>
+            <p class="text-3xl font-bold" id="weeklyCount">0</p>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <h3 class="font-semibold text-gray-700 mb-2">📊 Submissions This Week</h3>
+          <canvas id="weeklyChart" height="120"></canvas>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-xl p-4 shadow-sm mb-4">
+        <div class="flex flex-wrap gap-3 items-center justify-between">
+          <div class="flex gap-3 flex-wrap">
+            <div class="relative">
+              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input type="text" id="searchInput" placeholder="Search by name or email..." 
+                     class="pl-9 pr-3 py-2 border rounded-lg w-64 text-sm focus:ring-2 focus:ring-amber-400 outline-none">
+            </div>
+            <select id="statusFilter" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-400 outline-none">
+              <option value="all">All Status</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Pending Review">Pending Review</option>
+            </select>
+            <button onclick="clearFilters()" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm transition">
+              <i class="fas fa-times mr-1"></i> Clear Filters
+            </button>
+          </div>
+          <div class="text-sm text-gray-500">
+            <span id="filteredCount">0</span> results shown
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex gap-2 mb-4">
+        <button onclick="showTab('enrollments')" id="tabEnrollments" class="px-4 py-2 rounded-full bg-amber-600 text-white">📋 Enrollments</button>
+        <button onclick="showTab('scholarships')" id="tabScholarships" class="px-4 py-2 rounded-full bg-gray-300 text-gray-700">🎓 Scholarships</button>
+      </div>
+      
+      <div id="enrollmentsTab" class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+              <tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3 text-left">Phone</th><th class="px-4 py-3 text-left">Program</th><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-center">Actions</th></tr>
+            </thead>
+            <tbody id="enrollmentsTableBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">No enrollments found</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div id="scholarshipsTab" class="bg-white rounded-xl shadow-sm overflow-hidden hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+              <tr><th class="px-4 py-3 text-left">Full Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3 text-left">Phone</th><th class="px-4 py-3 text-left">School</th><th class="px-4 py-3 text-left">Grade</th><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-center">Actions</th></tr>
+            </thead>
+            <tbody id="scholarshipsTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-500">No scholarship applications found</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Trash Modal -->
+  <div id="trashModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden">
+      <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+        <h3 class="text-xl font-bold"><i class="fas fa-trash-alt mr-2"></i> Trash Bin</h3>
+        <button onclick="closeTrash()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
+      </div>
+      <div class="p-4 overflow-y-auto">
+        <div class="flex gap-2 mb-4">
+          <button onclick="filterTrash('all')" id="trashAllBtn" class="px-3 py-1 rounded-full bg-amber-600 text-white text-sm">All</button>
+          <button onclick="filterTrash('enrollment')" id="trashEnrollBtn" class="px-3 py-1 rounded-full bg-gray-300 text-gray-700 text-sm">Enrollments</button>
+          <button onclick="filterTrash('scholarship')" id="trashScholarBtn" class="px-3 py-1 rounded-full bg-gray-300 text-gray-700 text-sm">Scholarships</button>
+          <button onclick="emptyTrash()" class="ml-auto px-3 py-1 rounded-full bg-red-600 text-white text-sm">Empty Trash</button>
+        </div>
+        <div id="trashList">Trash is empty</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhHV7VrKK5ZcoFUEXvSVQDpkTiMvN4jVk",
+      authDomain: "unmuted-debate.firebaseapp.com",
+      projectId: "unmuted-debate",
+      storageBucket: "unmuted-debate.firebasestorage.app",
+      messagingSenderId: "351095685082",
+      appId: "1:351095685082:web:e128a5dbe08f8929978ae3",
+      measurementId: "G-6Q5S6YRKV3"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    
+    // Variables
+    let currentTrashFilter = 'all';
+    let allEnrollments = [];
+    let allScholarships = [];
+    let currentTab = 'enrollments';
+    let weeklyChart = null;
+    
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        loadAllData();
+      } else {
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('dashboardSection').classList.add('hidden');
+      }
+    });
+    
+    async function loadAllData() {
+      await loadEnrollments();
+      await loadScholarships();
+      await loadStats();
+      await loadWeeklyChart();
+    }
+    
+    async function loadEnrollments() {
+      const snapshot = await db.collection('enrollments').orderBy('timestamp', 'desc').get();
+      allEnrollments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      applyFilters();
+    }
+    
+    async function loadScholarships() {
+      const snapshot = await db.collection('scholarships').orderBy('timestamp', 'desc').get();
+      allScholarships = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (currentTab === 'scholarships') applyFilters();
+    }
+    
+    async function loadStats() {
+      const enrollSnapshot = await db.collection('enrollments').get();
+      const scholarSnapshot = await db.collection('scholarships').get();
+      document.getElementById('enrollmentCount').innerText = enrollSnapshot.size;
+      document.getElementById('scholarshipCount').innerText = scholarSnapshot.size;
+      document.getElementById('totalCount').innerText = enrollSnapshot.size + scholarSnapshot.size;
+      
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      let weekly = 0;
+      enrollSnapshot.docs.forEach(doc => { if (doc.data().dateSubmitted && new Date(doc.data().dateSubmitted) > weekAgo) weekly++; });
+      scholarSnapshot.docs.forEach(doc => { if (doc.data().dateSubmitted && new Date(doc.data().dateSubmitted) > weekAgo) weekly++; });
+      document.getElementById('weeklyCount').innerText = weekly;
+    }
+    
+    async function loadWeeklyChart() {
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        last7Days.push(date.toISOString().slice(0,10));
+      }
+      const enrollSnapshot = await db.collection('enrollments').get();
+      const scholarSnapshot = await db.collection('scholarships').get();
+      const dailyCounts = last7Days.map(day => {
+        let count = 0;
+        enrollSnapshot.docs.forEach(doc => { if (doc.data().dateSubmitted?.slice(0,10) === day) count++; });
+        scholarSnapshot.docs.forEach(doc => { if (doc.data().dateSubmitted?.slice(0,10) === day) count++; });
+        return count;
+      });
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      if (weeklyChart) weeklyChart.destroy();
+      weeklyChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: last7Days.map(d => d.slice(5)), datasets: [{ label: 'Submissions', data: dailyCounts, borderColor: '#f59e0b', fill: true, tension: 0.4 }] }
+      });
+    }
+    
+    function applyFilters() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      if (currentTab === 'enrollments') {
+        let filtered = [...allEnrollments];
+        if (searchTerm) filtered = filtered.filter(item => (item.name && item.name.toLowerCase().includes(searchTerm)) || (item.email && item.email.toLowerCase().includes(searchTerm)));
+        if (statusFilter !== 'all') filtered = filtered.filter(item => item.status === statusFilter);
+        renderEnrollmentsTable(filtered);
+        document.getElementById('filteredCount').innerText = filtered.length;
+      } else {
+        let filtered = [...allScholarships];
+        if (searchTerm) filtered = filtered.filter(item => (item.fullName && item.fullName.toLowerCase().includes(searchTerm)) || (item.email && item.email.toLowerCase().includes(searchTerm)));
+        if (statusFilter !== 'all') filtered = filtered.filter(item => item.status === statusFilter);
+        renderScholarshipsTable(filtered);
+        document.getElementById('filteredCount').innerText = filtered.length;
+      }
+    }
+    
+    function renderEnrollmentsTable(data) {
+      const tbody = document.getElementById('enrollmentsTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No enrollments found</td></tr>'; return; }
+      tbody.innerHTML = data.map(doc => `<tr class="border-b hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium">${doc.name || '-'}</td>
+        <td class="px-4 py-3">${doc.email || '-'}</td>
+        <td class="px-4 py-3">${doc.phone || '-'}</td>
+        <td class="px-4 py-3">${doc.program || '-'}</td>
+        <td class="px-4 py-3 text-xs">${doc.dateSubmitted?.slice(0,10) || '-'}</td>
+        <td class="px-4 py-3"><select onchange="updateStatus('enrollments', '${doc.id}', this.value, '${doc.name}')" class="px-2 py-1 rounded-full text-xs font-semibold"><option value="New" ${doc.status === 'New' ? 'selected' : ''}>🟡 New</option><option value="Contacted" ${doc.status === 'Contacted' ? 'selected' : ''}>🔵 Contacted</option><option value="Approved" ${doc.status === 'Approved' ? 'selected' : ''}>🟢 Approved</option><option value="Rejected" ${doc.status === 'Rejected' ? 'selected' : ''}>🔴 Rejected</option></select></td>
+        <td class="px-4 py-3 text-center"><button onclick="moveToTrash('enrollments', '${doc.id}', '${doc.name}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-trash-alt"></i> Delete</button></td>
+      </tr>`).join('');
+    }
+    
+    function renderScholarshipsTable(data) {
+      const tbody = document.getElementById('scholarshipsTableBody');
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No scholarship applications found</td></tr>'; return; }
+      tbody.innerHTML = data.map(doc => `<tr class="border-b hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium">${doc.fullName || '-'}</td>
+        <td class="px-4 py-3">${doc.email || '-'}</td>
+        <td class="px-4 py-3">${doc.phone || '-'}</td>
+        <td class="px-4 py-3">${doc.school || '-'}</td>
+        <td class="px-4 py-3">${doc.grade || '-'}</td>
+        <td class="px-4 py-3 text-xs">${doc.dateSubmitted?.slice(0,10) || '-'}</td>
+        <td class="px-4 py-3"><select onchange="updateStatus('scholarships', '${doc.id}', this.value, '${doc.fullName}')" class="px-2 py-1 rounded-full text-xs font-semibold"><option value="Pending Review" ${doc.status === 'Pending Review' ? 'selected' : ''}>🟡 Pending Review</option><option value="Contacted" ${doc.status === 'Contacted' ? 'selected' : ''}>🔵 Contacted</option><option value="Approved" ${doc.status === 'Approved' ? 'selected' : ''}>🟢 Approved</option><option value="Rejected" ${doc.status === 'Rejected' ? 'selected' : ''}>🔴 Rejected</option></select></td>
+        <td class="px-4 py-3 text-center"><button onclick="moveToTrash('scholarships', '${doc.id}', '${doc.fullName}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-trash-alt"></i> Delete</button></td>
+      </tr>`).join('');
+    }
+    
+    async function updateStatus(collection, docId, newStatus, itemName) {
+      if (confirm(`Change status of "${itemName}" to ${newStatus}?`)) {
+        await db.collection(collection).doc(docId).update({ status: newStatus });
+        await loadAllData();
+        alert(`Status updated to ${newStatus}`);
+      }
+    }
+    
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('statusFilter').value = 'all';
+      applyFilters();
+    }
+    
+    async function exportCSV() {
+      let csv = currentTab === 'enrollments' ? "Name,Email,Phone,Program,Date,Status\n" : "Full Name,Email,Phone,School,Grade,Date,Status\n";
+      const data = currentTab === 'enrollments' ? allEnrollments : allScholarships;
+      data.forEach(item => {
+        if (currentTab === 'enrollments') csv += `"${item.name || ''}","${item.email || ''}","${item.phone || ''}","${item.program || ''}","${item.dateSubmitted?.slice(0,10) || ''}","${item.status || ''}"\n`;
+        else csv += `"${item.fullName || ''}","${item.email || ''}","${item.phone || ''}","${item.school || ''}","${item.grade || ''}","${item.dateSubmitted?.slice(0,10) || ''}","${item.status || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentTab === 'enrollments' ? 'enrollments_export.csv' : 'scholarships_export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      alert('CSV exported successfully!');
+    }
+    
+    async function moveToTrash(collection, docId, itemName) {
+      if (confirm(`Move "${itemName}" to trash?`)) {
+        const docRef = db.collection(collection).doc(docId);
+        const doc = await docRef.get();
+        await db.collection('trash').add({ originalCollection: collection, originalId: docId, data: doc.data(), deletedAt: firebase.firestore.FieldValue.serverTimestamp(), deletedAtString: new Date().toISOString(), itemName: itemName });
+        await docRef.delete();
+        await loadAllData();
+        await updateTrashCount();
+        if (document.getElementById('trashModal').classList.contains('flex')) loadTrashItems();
+        alert(`"${itemName}" moved to trash`);
+      }
+    }
+    
+    async function restoreFromTrash(trashId, originalCollection, originalId, data) {
+      if (confirm(`Restore "${data.name || data.fullName || 'this item'}"?`)) {
+        await db.collection(originalCollection).doc(originalId).set(data);
+        await db.collection('trash').doc(trashId).delete();
+        await loadAllData();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Item restored successfully');
+      }
+    }
+    
+    async function permanentDelete(trashId, itemName) {
+      if (confirm(`Permanently delete "${itemName}"? This cannot be undone.`)) {
+        await db.collection('trash').doc(trashId).delete();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Item permanently deleted');
+      }
+    }
+    
+    async function emptyTrash() {
+      if (confirm('Delete ALL items in trash? This cannot be undone!')) {
+        const snapshot = await db.collection('trash').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        await updateTrashCount();
+        loadTrashItems();
+        alert('Trash emptied successfully');
+      }
+    }
+    
+    async function loadTrashItems() {
+      const snapshot = await db.collection('trash').orderBy('deletedAt', 'desc').get();
+      const container = document.getElementById('trashList');
+      if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-500 py-8">Trash is empty</p>'; return; }
+      let items = [];
+      snapshot.docs.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      if (currentTrashFilter !== 'all') items = items.filter(item => item.originalCollection === currentTrashFilter + 's');
+      if (items.length === 0) { container.innerHTML = '<p class="text-center text-gray-500 py-8">No items in this filter</p>'; return; }
+      container.innerHTML = items.map(item => {
+        const itemName = item.data?.name || item.data?.fullName || 'Unknown';
+        const itemEmail = item.data?.email || 'No email';
+        const type = item.originalCollection === 'enrollments' ? '📋 Enrollment' : '🎓 Scholarship';
+        return `<div class="bg-gray-50 rounded-lg p-3 flex justify-between items-center"><div><p class="font-semibold">${itemName}</p><p class="text-xs text-gray-500">${itemEmail} • ${type}</p></div><div class="flex gap-2"><button onclick='restoreFromTrash("${item.id}", "${item.originalCollection}", "${item.originalId}", ${JSON.stringify(item.data).replace(/"/g, '&quot;')})' class="bg-green-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-undo"></i> Restore</button><button onclick="permanentDelete('${item.id}', '${itemName}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-trash-alt"></i> Delete Forever</button></div></div>`;
+      }).join('');
+    }
+    
+    function filterTrash(filter) {
+      currentTrashFilter = filter;
+      document.getElementById('trashAllBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'all' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      document.getElementById('trashEnrollBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'enrollment' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      document.getElementById('trashScholarBtn').className = 'px-3 py-1 rounded-full text-sm ' + (filter === 'scholarship' ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-700');
+      loadTrashItems();
+    }
+    
+    async function updateTrashCount() {
+      const snapshot = await db.collection('trash').get();
+      document.getElementById('trashCount').innerText = snapshot.size;
+    }
+    
+    function showTrash() { document.getElementById('trashModal').classList.remove('hidden'); document.getElementById('trashModal').classList.add('flex'); loadTrashItems(); }
+    function closeTrash() { document.getElementById('trashModal').classList.add('hidden'); document.getElementById('trashModal').classList.remove('flex'); }
+    
+    function showTab(tab) {
+      currentTab = tab;
+      const enrollTab = document.getElementById('enrollmentsTab');
+      const scholarTab = document.getElementById('scholarshipsTab');
+      const btnEnroll = document.getElementById('tabEnrollments');
+      const btnScholar = document.getElementById('tabScholarships');
+      if (tab === 'enrollments') {
+        enrollTab.classList.remove('hidden'); scholarTab.classList.add('hidden');
+        btnEnroll.classList.add('bg-amber-600', 'text-white'); btnEnroll.classList.remove('bg-gray-300', 'text-gray-700');
+        btnScholar.classList.add('bg-gray-300', 'text-gray-700'); btnScholar.classList.remove('bg-amber-600', 'text-white');
+      } else {
+        enrollTab.classList.add('hidden'); scholarTab.classList.remove('hidden');
+        btnScholar.classList.add('bg-amber-600', 'text-white'); btnScholar.classList.remove('bg-gray-300', 'text-gray-700');
+        btnEnroll.classList.add('bg-gray-300', 'text-gray-700'); btnEnroll.classList.remove('bg-amber-600', 'text-white');
+      }
+      applyFilters();
+    }
+    
+    function showLogin() { document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('registerForm').classList.add('hidden'); document.getElementById('forgotPasswordForm').classList.add('hidden'); hideMessage(); }
+    function showRegister() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('registerForm').classList.remove('hidden'); document.getElementById('forgotPasswordForm').classList.add('hidden'); hideMessage(); }
+    function showForgotPassword() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('registerForm').classList.add('hidden'); document.getElementById('forgotPasswordForm').classList.remove('hidden'); hideMessage(); }
+    function showMessage(text, isError = false) { const msgDiv = document.getElementById('authMessage'); msgDiv.innerHTML = `<div class="p-3 rounded-lg ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} text-sm">${text}</div>`; msgDiv.classList.remove('hidden'); setTimeout(() => msgDiv.classList.add('hidden'), 5000); }
+    function hideMessage() { document.getElementById('authMessage').classList.add('hidden'); }
+    
+    async function loginWithPassword() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) { showMessage('Please enter both email and password', true); return; }
+      try { await auth.signInWithEmailAndPassword(email, password); showMessage('Login successful!'); } catch (error) { showMessage(error.message, true); }
+    }
+    
+    async function register() {
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      if (!email || !password) { showMessage('Please fill all fields', true); return; }
+      if (password !== confirm) { showMessage('Passwords do not match', true); return; }
+      if (password.length < 6) { showMessage('Password must be at least 6 characters', true); return; }
+      try { await auth.createUserWithEmailAndPassword(email, password); showMessage('Account created! You can now login.'); showLogin(); } catch (error) { showMessage(error.message, true); }
+    }
+    
+    async function sendPasswordReset() {
+      const email = document.getElementById('resetEmail').value;
+      if (!email) { showMessage('Please enter your email address', true); return; }
+      try { await auth.sendPasswordResetEmail(email); showMessage('Reset link sent to your email!'); setTimeout(() => showLogin(), 3000); } catch (error) { showMessage(error.message, true); }
+    }
+    
+    async function logout() { await auth.signOut(); allEnrollments = []; allScholarships = []; showMessage('Logged out successfully'); }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('searchInput')?.addEventListener('keyup', () => applyFilters());
+      document.getElementById('statusFilter')?.addEventListener('change', () => applyFilters());
+    });
+  </script>
+</body>
+</html>
